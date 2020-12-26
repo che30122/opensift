@@ -9,8 +9,9 @@
 #ifndef IMGFEATURES_H
 #define IMGFEATURES_H
 
-#include "cxcore.h"
-
+//#include "cxcore.h"
+#include<opencv2/core.hpp>
+ #include <opencv2/imgproc/types_c.h>
 /** FEATURE_OXFD <BR> FEATURE_LOWE */
 enum feature_type
   {

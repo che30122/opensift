@@ -9,12 +9,15 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include "cxcore.h"
-
+//#include "opencv2/core.hpp"
+#include <opencv2/core/core.hpp>
+//#include <opencv2/highgui/highgui_c.hpp> 
 #include <stdio.h>
 #include <dirent.h>
-
-
+#include <opencv2/imgproc/imgproc_c.h>
+#include <opencv2/imgproc/types_c.h>
+#include <opencv2/highgui/highgui_c.h>
+using namespace cv;
 /* absolute value */
 #ifndef ABS
 #define ABS(x) ( ( (x) < 0 )? -(x) : (x) )
@@ -156,7 +159,7 @@ extern char* prepend_path( const char* path, const char* file );
 
    @return Returns the basename of \a pathname.
 */
-extern char* basename( const char* pathname );
+//extern "C" char* basename( const char* pathname );
 
 
 /**

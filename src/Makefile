@@ -1,5 +1,5 @@
-CC	= gcc
-CFLAGS	+=
+CC	= g++
+CFLAGS	+= -std=c++11
 BIN_DIR = ../bin
 INC_DIR	= ../include
 LIB_DIR	= ../lib
@@ -14,35 +14,35 @@ libopensift.a: $(OBJ)
 	ar rc $(LIB_DIR)/$@ $(OBJ)
 	ranlib  $(LIB_DIR)/$@
 
-siftfeat: libopensift.a siftfeat.c
-	$(CC) $(CFLAGS) $(INCL) siftfeat.c -o $(BIN_DIR)/$@ $(LIBS)
+siftfeat: libopensift.a siftfeat.cpp
+	$(CC) $(CFLAGS) $(INCL) siftfeat.cpp -o $(BIN_DIR)/$@ $(LIBS)
 
-match: libopensift.a match.c
-	$(CC) $(CFLAGS) $(INCL) match.c -o $(BIN_DIR)/$@ $(LIBS)
+match: libopensift.a match.cpp
+	$(CC) $(CFLAGS) $(INCL) match.cpp -o $(BIN_DIR)/$@ $(LIBS)
 
-match_num: libopensift.a match.c
-	$(CC) $(CFLAGS) $(INCL) match_num.c -o $(BIN_DIR)/$@ $(LIBS)
+match_num: libopensift.a match.cpp
+	$(CC) $(CFLAGS) $(INCL) match_num.cpp -o $(BIN_DIR)/$@ $(LIBS)
 
-dspfeat: libopensift.a dspfeat.c
-	$(CC) $(CFLAGS) $(INCL) dspfeat.c -o $(BIN_DIR)/$@ $(LIBS)
+dspfeat: libopensift.a dspfeat.cpp
+	$(CC) $(CFLAGS) $(INCL) dspfeat.cpp -o $(BIN_DIR)/$@ $(LIBS)
 
-imgfeatures.o: imgfeatures.c $(INC_DIR)/imgfeatures.h
-	$(CC) $(CFLAGS) $(INCL) -c imgfeatures.c -o $@
+imgfeatures.o: imgfeatures.cpp $(INC_DIR)/imgfeatures.h
+	$(CC) $(CFLAGS) $(INCL) -c imgfeatures.cpp -o $@
 
-utils.o: utils.c $(INC_DIR)/utils.h
-	$(CC) $(CFLAGS) $(INCL) -c utils.c -o $@
+utils.o: utils.cpp $(INC_DIR)/utils.h
+	$(CC) $(CFLAGS) $(INCL) -c utils.cpp -o $@
 
-sift.o: sift.c $(INC_DIR)/sift.h
-	$(CC) $(CFLAGS) $(INCL) -c sift.c -o $@
+sift.o: sift.cpp $(INC_DIR)/sift.h
+	$(CC) $(CFLAGS) $(INCL) -c sift.cpp -o $@
 
-kdtree.o: kdtree.c $(INC_DIR)/kdtree.h
-	$(CC) $(CFLAGS) $(INCL) -c kdtree.c -o $@
+kdtree.o: kdtree.cpp $(INC_DIR)/kdtree.h
+	$(CC) $(CFLAGS) $(INCL) -c kdtree.cpp -o $@
 
-minpq.o: minpq.c $(INC_DIR)/minpq.h
-	$(CC) $(CFLAGS) $(INCL) -c minpq.c -o $@
+minpq.o: minpq.cpp $(INC_DIR)/minpq.h
+	$(CC) $(CFLAGS) $(INCL) -c minpq.cpp -o $@
 
-xform.o: xform.c $(INC_DIR)/xform.h
-	$(CC) $(CFLAGS) $(INCL) -c xform.c -o $@
+xform.o: xform.cpp $(INC_DIR)/xform.h
+	$(CC) $(CFLAGS) $(INCL) -c xform.cpp -o $@
 
 clean:
 	rm -f *~ *.o core

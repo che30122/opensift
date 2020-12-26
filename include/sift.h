@@ -20,8 +20,12 @@
 #ifndef SIFT_H
 #define SIFT_H
 
-#include "cxcore.h"
-
+//#include "cxcore.h"
+#include<opencv2/core.hpp>
+#include <opencv2/imgproc/imgproc_c.h>
+#include <opencv2/imgproc/types_c.h>
+#include <opencv2/highgui/highgui_c.h>
+using namespace cv;
 /******************************** Structures *********************************/
 
 /** holds feature data relevant to detection */

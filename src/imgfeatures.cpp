@@ -11,11 +11,16 @@
 
 //#include <cxcore.h>
 //#include <opencv2/core.hpp>
+//#include<core.hpp>
 #include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
+//#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc_c.h>
+#include <opencv2/imgproc/types_c.h>
+#include <opencv2/highgui/highgui_c.h>
 #include <opencv2/opencv.hpp>
-#include <opencv2/imgproc.hpp>
- #include <opencv2/imgproc/types_c.h>
+//#include <opencv2/imgproc_c.hpp>
+//#include <opencv2/imgproc/imgproc_c.h>
+// #include <opencv2/imgproc/types_c.h>
 using namespace cv;
 static int import_oxfd_features( char*, struct feature** );
 static int export_oxfd_features( char*, struct feature*, int );
@@ -27,6 +32,12 @@ static int export_lowe_features( char*, struct feature*, int );
 static void draw_lowe_features( IplImage*, struct feature*, int );
 static void draw_lowe_feature( IplImage*, struct feature*, CvScalar );
 
+CvScalar cv_convert(Scalar &a){
+	CvScalar temp;
+	for(int i=0;i<4;i++)
+		temp.val[i]=a[i];
+	return temp;
+}
 
 /*
   Reads image features from file.  The file should be formatted as from
@@ -342,13 +353,13 @@ static int export_oxfd_features( char* filename, struct feature* feat, int n )
 */
 static void draw_oxfd_features( IplImage* img, struct feature* feat, int n )
 {
-  CvScalar color = CV_RGB( 255, 255, 255 );
+	cv::Scalar color = CV_RGB( 255, 255, 255 );
   int i;
 
   if( img-> nChannels > 1 )
     color = FEATURE_OXFD_COLOR;
   for( i = 0; i < n; i++ )
-    draw_oxfd_feature( img, feat + i, color );
+    draw_oxfd_feature( img, feat + i, cv_convert(color) );
 }
 
 
@@ -378,9 +389,9 @@ static void draw_oxfd_feature( IplImage* img, struct feature* feat,
   l2 = 1 / sqrt( e[0] );
   alpha = -atan2( v[1], v[0] );
   alpha *= 180 / M_PI;
-
+	Scalar zero=CV_RGB(0,0,0);
   cvEllipse( img, cvPoint( feat->x, feat->y ), cvSize( l2, l1 ), alpha,
-	     0, 360, CV_RGB(0,0,0), 3, 8, 0 );
+	     0, 360, cv_convert(zero), 3, 8, 0 );
   cvEllipse( img, cvPoint( feat->x, feat->y ), cvSize( l2, l1 ), alpha,
 	     0, 360, color, 1, 8, 0 );
   cvLine( img, cvPoint( feat->x+2, feat->y ), cvPoint( feat->x-2, feat->y ),
@@ -432,7 +443,7 @@ static int import_lowe_features( char* filename, struct feature** features )
       return -1;
     }
 
-  f = calloc( n, sizeof(struct feature) );
+  f = (struct feature*)calloc( n, sizeof(struct feature) );
   for( i = 0; i < n; i++ )
     {
       /* read affine region parameters */
@@ -549,13 +560,13 @@ static int export_lowe_features( char* filename, struct feature* feat, int n )
 */
 static void draw_lowe_features( IplImage* img, struct feature* feat, int n )
 {
-  CvScalar color = CV_RGB( 255, 255, 255 );
+  /*Cv*/Scalar color = CV_RGB( 255, 255, 255 );
   int i;
 
   if( img-> nChannels > 1 )
     color = FEATURE_LOWE_COLOR;
   for( i = 0; i < n; i++ )
-    draw_lowe_feature( img, feat + i, color );
+    draw_lowe_feature( img, feat + i, cv_convert(color)) ;
 }
 
 

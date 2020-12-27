@@ -1,13 +1,13 @@
 //#include <opencv2/gpu/gpu.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/version.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 using namespace cv;
 
 #if CV_VERSION_EPOCH == 2
 #define OPENCV2
 #include <opencv2/gpu/gpu.hpp>
 namespace GPU = cv::gpu;
-
 #elif CV_VERSION_MAJOR == 4 
 #define  OPENCV4
 #include <opencv2/core/cuda.hpp>
@@ -23,10 +23,10 @@ namespace GPU = cv::cuda;
 #define THREAD_Y 32
 #define WRAP_SIZE 32
 #define MAX_WRAP_NUM 32
-#define KERNEL_SIZE 3
 
 //using namespace cv;
 //using namespace cv;
+int KERNEL_SIZE;
 __global__ void conv(int* dev){
         int pixel_i=blockDim.x*blockIdx.x+threadIdx.x;
 	int pixel_j=blockDim.y*blockIdx.y+threadIdx.y;
@@ -47,7 +47,7 @@ __global__ void convolution(GPU::PtrStepSz<float1> src,GPU::PtrStepSz<double> gu
 	float sum=0;
 	//share_mem[share_i][share_j]=src(pixel_i,pixel_j);
 	//share_mem[threadIdx.x][threadIdx.y]=src(pixel_i,pixel_j).x;
-	__syncthreads();
+	//__syncthreads();
 	 //printf("%d %d %d\n",pixel_i,pixel_j,share_mem[pixel_i][pixel_j]);
 	//printf("%lf\n",guass_kernel(0,0));
 	if(!(pixel_i<kernel_radius || pixel_j<kernel_radius || pixel_i>=orign_width+kernel_radius  || pixel_j>=orign_height+kernel_radius)){
@@ -71,6 +71,8 @@ __global__ void convolution(GPU::PtrStepSz<float1> src,GPU::PtrStepSz<double> gu
 }
 
 void guassain_conv(const Mat *src,Mat *dst,double sigma){
+//	int depth = CV_MAT_DEPTH(src.type());
+	KERNEL_SIZE = cvRound(sigma* 4 * 2 + 1)|1;
 	int kernel_radius=KERNEL_SIZE/2;
 	int orign_width=src->cols,orign_height=src->rows;
 	Mat padding_image;
@@ -81,18 +83,18 @@ void guassain_conv(const Mat *src,Mat *dst,double sigma){
 		std::cout<<"not use GPU module"<<std::endl;
 		return ;
 	}
-	std::cout<<dst->type()<<std::endl;	
-	std::cout<<dst->cols<<"rows"<<dst->rows<<std::endl;
+	//std::cout<<dst->type()<<std::endl;	
+	//std::cout<<dst->cols<<"rows"<<dst->rows<<std::endl;
 	Mat gauss_x=getGaussianKernel(KERNEL_SIZE,sigma),gauss_y=getGaussianKernel(KERNEL_SIZE,sigma); //3*3 filter
 	Mat gauss_kernel=gauss_x*gauss_y.t();
-	std::cout<<gauss_kernel<<std::endl;
+	//std::cout<<gauss_kernel<<std::endl;
 	copyMakeBorder(*src,padding_image,kernel_radius,kernel_radius,kernel_radius,kernel_radius,BORDER_CONSTANT, 0);
 	//printf("%d %d %d %d\n",src->rows,src->cols,padding_image.rows,padding_image.cols);
 	int grid_num_x=(padding_image.cols+THREAD_X-1)/THREAD_X,grid_num_y=(padding_image.rows+THREAD_Y-1)/THREAD_Y;
 	//printf("%d %d\n",grid_num_x,grid_num_y);
 	result.upload(*dst);
 	int *h,*dev;
-	printf("%d %d %d\n",gauss_kernel.rows,gauss_kernel.cols,gauss_kernel.channels());
+	//printf("%d %d %d\n",gauss_kernel.rows,gauss_kernel.cols,gauss_kernel.channels());
 	g_kernel.upload(gauss_kernel);
 	device_image.upload(padding_image);
 	dim3 thread_block(THREAD_X,THREAD_Y);
@@ -103,9 +105,9 @@ void guassain_conv(const Mat *src,Mat *dst,double sigma){
 	result.download(re);
 	//std::cout<<src->type()<<re.type()<<std::endl;
 	//std::cout<<(*src-re)<<std::endl;
-	printf("%d %d %d %d %d %d\n",src->rows,src->cols,src->channels(),re.rows,re.cols,re.channels());
+	//printf("%d %d %d %d %d %d\n",src->rows,src->cols,src->channels(),re.rows,re.cols,re.channels());
 	*dst=re.clone();
-	imwrite("re.png",re);
+	//imwrite("re.png",re);
 	return ;
 }
 

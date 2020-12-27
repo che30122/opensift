@@ -229,7 +229,7 @@ static IplImage* convert_to_gray32( IplImage* img )
 }
 
 
-
+extern void guassain_conv(const Mat*,Mat*,double);
 /*
   Builds Gaussian scale space pyramid from an image
 
@@ -242,13 +242,15 @@ static IplImage* convert_to_gray32( IplImage* img )
     array
 */
 static IplImage*** build_gauss_pyr( IplImage* base, int octvs,
-			     int intvls, double sigma )
+	 		     int intvls, double sigma )
 {
   IplImage*** gauss_pyr;
   const int _intvls = intvls;
   double sig[_intvls+3], sig_total, sig_prev, k;
   int i, o;
-
+  	Mat img=imread("../beaver.png");
+	Mat result=imread("../beaver.png");
+	guassain_conv(&img,&result,1);
   gauss_pyr = (IplImage***)calloc( octvs, sizeof( IplImage** ) );
   for( i = 0; i < octvs; i++ )
     gauss_pyr[i] = (IplImage**)calloc( intvls + 3, sizeof( IplImage *) );
@@ -281,10 +283,27 @@ static IplImage*** build_gauss_pyr( IplImage* base, int octvs,
 	/* blur the current octave's last image to create the next one */
 	else
 	  {
-	    gauss_pyr[o][i] = cvCreateImage( cvGetSize(gauss_pyr[o][i-1]),
+		struct CvSize size=cvGetSize(gauss_pyr[o][i-1]);
+	    gauss_pyr[o][i] = cvCreateImage( size,
 					     IPL_DEPTH_32F, 1 );
-	    cvSmooth( gauss_pyr[o][i-1], gauss_pyr[o][i],
-		      CV_GAUSSIAN, 0, 0, sig[i], sig[i] );
+	    
+	    Mat src=cv::cvarrToMat(gauss_pyr[o][i-1]);
+	    Mat dst=Mat(size.height,size.width,CV_32FC1);//cv::cvarrToMat(gauss_pyr[o][i]);
+		guassain_conv(&src,&dst,sig[i]);
+	    cvSmooth( gauss_pyr[o][i-1], gauss_pyr[o][i],		      CV_GAUSSIAN, 0, 0, sig[i], sig[i] );
+	    Mat re=dst-cvarrToMat(gauss_pyr[o][i]);
+	    std::cout<<re<<std::endl;
+		//std::cout<<"result dst "<<dst.cols<<" "<<dst.rows<<" "<<dst.channels()<<std::endl;
+		//std::cout<<"result src "<<cvGetSize(gauss_pyr[o][i]).width<<cvGetSize(gauss_pyr[o][i]).height<<std::endl;
+		//imsave(dst)
+		//imwrite("dst.png",dst);
+
+		//while(1){ if(waitKey(100)==27)break; }
+		//std::cout<<dst<<std::endl;
+		
+	    IplImage ipltemp=cvIplImage(dst);
+		
+	    cvCopy(&ipltemp,gauss_pyr[o][i]);
 	  }
       }
 

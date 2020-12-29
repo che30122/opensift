@@ -93,8 +93,9 @@ cvCopy(&ipltemp2,img2);
     }
 
   fprintf( stderr, "Found %d total matches\n", m );
-  display_big_img( stacked, "Matches" );
-  cvWaitKey( 0 );
+  imwrite("match.png",cv::cvarrToMat(stacked));
+  //display_big_img( stacked, "Matches" );
+  //cvWaitKey( 0 );
 
   /* 
      UNCOMMENT BELOW TO SEE HOW RANSAC FUNCTION WORKS

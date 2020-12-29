@@ -25,6 +25,7 @@
 #include <opencv2/imgproc/imgproc_c.h>
 #include <opencv2/imgproc/types_c.h>
 #include <opencv2/highgui/highgui_c.h>
+#include<stdio.h>
 //#include <core.h>
 //#include <cv.h>
 
@@ -248,9 +249,10 @@ static IplImage*** build_gauss_pyr( IplImage* base, int octvs,
   const int _intvls = intvls;
   double sig[_intvls+3], sig_total, sig_prev, k;
   int i, o;
-  	Mat img=imread("../beaver.png");
-	Mat result=imread("../beaver.png");
-	guassain_conv(&img,&result,1);
+  	/*Mat imgg=imread("../beaver.png");
+	Mat resultt=imread("../beaver.png");
+	guassain_conv(&imgg,&resultt,sig[i]);
+	imwrite("re.png",resultt);*/
   gauss_pyr = (IplImage***)calloc( octvs, sizeof( IplImage** ) );
   for( i = 0; i < octvs; i++ )
     gauss_pyr[i] = (IplImage**)calloc( intvls + 3, sizeof( IplImage *) );
@@ -284,26 +286,28 @@ static IplImage*** build_gauss_pyr( IplImage* base, int octvs,
 	else
 	  {
 		struct CvSize size=cvGetSize(gauss_pyr[o][i-1]);
-	    gauss_pyr[o][i] = cvCreateImage( size,
+	  	  gauss_pyr[o][i] = cvCreateImage( size,
 					     IPL_DEPTH_32F, 1 );
-	    
 	    Mat src=cv::cvarrToMat(gauss_pyr[o][i-1]);
 	    Mat dst=Mat(size.height,size.width,CV_32FC1);//cv::cvarrToMat(gauss_pyr[o][i]);
-		guassain_conv(&src,&dst,sig[i]);
-	    cvSmooth( gauss_pyr[o][i-1], gauss_pyr[o][i],		      CV_GAUSSIAN, 0, 0, sig[i], sig[i] );
-	    Mat re=dst-cvarrToMat(gauss_pyr[o][i]);
-	    std::cout<<re<<std::endl;
-		//std::cout<<"result dst "<<dst.cols<<" "<<dst.rows<<" "<<dst.channels()<<std::endl;
-		//std::cout<<"result src "<<cvGetSize(gauss_pyr[o][i]).width<<cvGetSize(gauss_pyr[o][i]).height<<std::endl;
-		//imsave(dst)
-		//imwrite("dst.png",dst);
 
-		//while(1){ if(waitKey(100)==27)break; }
-		//std::cout<<dst<<std::endl;
+		guassain_conv(&src,&dst,sig[i]);
+
+	/*	std::string pre_fix=std::to_string(o)+std::string("_")+std::to_string(i)+std::string(".png");
+		std::string output_img_path=std::string("./pic/re_")+pre_fix;
+		std::string ans_img_path=std::string("./pic/ans_")+pre_fix;
+
+		imwrite(output_img_path.c_str(),dst);*/
+	    //cvSmooth( gauss_pyr[o][i-1], gauss_pyr[o][i],		      CV_GAUSSIAN, 0, 0, sig[i], sig[i] );
+	    	//imwrite(ans_img_path.c_str(),cv::cvarrToMat(gauss_pyr[o][i],true));
+	//	Mat diff=abs(cv::cvarrToMat(gauss_pyr[o][i],true)-dst);
+	//	float s=cv::sum(diff)[0];	
+	//	std::cout<<"ave_error"<<s/(dst.rows*dst.cols)<<std::endl;
 		
-	    IplImage ipltemp=cvIplImage(dst);
 		
-	    cvCopy(&ipltemp,gauss_pyr[o][i]);
+	    	IplImage ipltemp=cvIplImage(dst);
+		
+	    	cvCopy(&ipltemp,gauss_pyr[o][i]);
 	  }
       }
 

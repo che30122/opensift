@@ -26,10 +26,14 @@ OPENCV_LIBS= `pkg-config --libs opencv gtk+-2.0`
 
 #dspfeat: libopensift.a dspfeat.cpp
 #	$(CC) $(CFLAGS) $(INCL) dspfeat.cpp -o $(BIN_DIR)/$@ $(LIBS)
-all: sift
+all: sift conv
 
 sift: $(OBJ)
 	$(NVCC) $(NVCCFLAGS) $(OBJ)  $(INC_OPENCV) $(OPENCV_LIBS) -o sift
+conv: main.o convolution.o
+	$(NVCC) $(NVCCFLAGS) main.o convolution.o  $(INC_OPENCV) $(OPENCV_LIBS) -o conv
+main.o: main.cpp
+	$(CC) $(CFLAGS) -c main.cpp $(INC_OPENCV) $(OPENCV_INC) $(OPENCV_LIBS)
 match.o: match.cpp
 	$(CC) $(CFLAGS) $(INCL) -c match.cpp -o $@
 imgfeatures.o: imgfeatures.cpp $(INC_DIR)/imgfeatures.h

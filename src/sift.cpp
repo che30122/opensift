@@ -230,7 +230,8 @@ static IplImage* convert_to_gray32( IplImage* img )
 }
 
 
-extern void guassain_conv(const Mat*,Mat*,double);
+extern void guassain_conv(const Mat*,Mat*,double,int,int,int,int);
+//extern void guassain_conv_no_shared(const Mat*,Mat*,double);
 /*
   Builds Gaussian scale space pyramid from an image
 
@@ -286,25 +287,31 @@ static IplImage*** build_gauss_pyr( IplImage* base, int octvs,
 	else
 	  {
 		struct CvSize size=cvGetSize(gauss_pyr[o][i-1]);
-	  	  gauss_pyr[o][i] = cvCreateImage( size,
+	  	gauss_pyr[o][i] = cvCreateImage( size,
 					     IPL_DEPTH_32F, 1 );
-	    Mat src=cv::cvarrToMat(gauss_pyr[o][i-1]);
-	    Mat dst=Mat(size.height,size.width,CV_32FC1);//cv::cvarrToMat(gauss_pyr[o][i]);
-
-		guassain_conv(&src,&dst,sig[i]);
-
+	    	Mat src=cv::cvarrToMat(gauss_pyr[o][i-1]);
+	    	Mat dst=Mat(size.height,size.width,CV_32FC1);//cv::cvarrToMat(gauss_pyr[o][i]);
+		//Mat dst1=Mat(size.height,size.width,CV_32FC1);
+		guassain_conv(&src,&dst,sig[i],512,2,2,512);
+		//guassain_conv_no_shared(&src,&dst,sig[i]);
 	/*	std::string pre_fix=std::to_string(o)+std::string("_")+std::to_string(i)+std::string(".png");
 		std::string output_img_path=std::string("./pic/re_")+pre_fix;
 		std::string ans_img_path=std::string("./pic/ans_")+pre_fix;
 
 		imwrite(output_img_path.c_str(),dst);*/
-	    //cvSmooth( gauss_pyr[o][i-1], gauss_pyr[o][i],		      CV_GAUSSIAN, 0, 0, sig[i], sig[i] );
+//cvSmooth( gauss_pyr[o][i-1], gauss_pyr[o][i],		      CV_GAUSSIAN, 0, 0, sig[i], sig[i] );
+//	    	std::cout<<"sigma"<<sig[i]<<std::endl;
 	    	//imwrite(ans_img_path.c_str(),cv::cvarrToMat(gauss_pyr[o][i],true));
-	//	Mat diff=abs(cv::cvarrToMat(gauss_pyr[o][i],true)-dst);
-	//	float s=cv::sum(diff)[0];	
-	//	std::cout<<"ave_error"<<s/(dst.rows*dst.cols)<<std::endl;
-		
-		
+//		Mat diff=abs(cv::cvarrToMat(gauss_pyr[o][i],true)-dst);
+//		float s=cv::sum(diff)[0];	
+//		std::cout<<"ave_error"<<s/(dst.rows*dst.cols)<<std::endl;
+	/*	Mat diff=abs(dst-dst1);
+		std::cout<<dst.cols<<" "<<dst.rows<<" "<<dst1.cols<<" "<<dst1.rows<<std::endl;
+		float s=cv::sum(diff)[0];*/
+//		if(dst.rows==0 || dst.cols==0)
+//			fprintf(stderr,"error\n");
+		//std::cout<<"ave_error"<<s/(dst.rows*dst.cols)<<std::endl;
+		//std::cout<<dst<<std::endl;
 	    	IplImage ipltemp=cvIplImage(dst);
 		
 	    	cvCopy(&ipltemp,gauss_pyr[o][i]);
@@ -879,6 +886,11 @@ static double* ori_hist( IplImage* img, int r, int c, int n, int rad,
   int bin, i, j;
 
   hist = (double*)calloc( n, sizeof( double ) );
+  if(!hist){
+	  fprintf(stderr,"calloc error\n");
+	  exit(-1);
+	 }
+  //fprintf(stderr,"")
   exp_denom = 2.0 * sigma * sigma;
   for( i = -rad; i <= rad; i++ )
     for( j = -rad; j <= rad; j++ )
@@ -887,6 +899,7 @@ static double* ori_hist( IplImage* img, int r, int c, int n, int rad,
 	  w = exp( -( i*i + j*j ) / exp_denom );
 	  bin = cvRound( n * ( ori + CV_PI ) / PI2 );
 	  bin = ( bin < n )? bin : 0;
+	  //bin =1;
 	  hist[bin] += w * mag;
 	}
 

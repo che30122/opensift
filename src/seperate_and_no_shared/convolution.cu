@@ -165,7 +165,7 @@ __global__ void conv_y(GPU::PtrStepSz<float> src,/*const double* __restrict__ gu
 	return ;
 }
 
-void guassain_conv(const Mat *src,Mat *dst,double sigma){
+void guassain_conv(const Mat *src,Mat *dst,double sigma,int thread_x,int thread_y,int thread_x1,int thread_y1){
 //	int depth = CV_MAT_DEPTH(src.type());
 	KERNEL_SIZE = cvRound(sigma* 4 * 2 + 1)|1;
 	//std::cout<<KERNEL_SIZE<<std::endl;
@@ -206,9 +206,12 @@ void guassain_conv(const Mat *src,Mat *dst,double sigma){
 	//cudaHostAlloc(&y,sizeof(double)*KERNEL_SIZE,cudaHostAllocDefault);
 	//allocate
 	copyMakeBorder(*src,padding_image,kernel_radius,kernel_radius,kernel_radius,kernel_radius,BORDER_CONSTANT, 0);
-	int orign_grid_num_x=(src->cols+THREAD_X-1)/THREAD_X,orign_grid_num_y=(src->rows+THREAD_Y-1)/THREAD_Y;
-	int grid_num_x=orign_grid_num_x+(2*kernel_radius*orign_grid_num_x+THREAD_X-1)/THREAD_X,grid_num_y=orign_grid_num_y+(2*kernel_radius*orign_grid_num_y+THREAD_Y-1)/THREAD_Y;
+	//int orign_grid_num_x=(src->cols+thread_x-1)/thread_x,orign_grid_num_y=(src->rows+thread_y-1)/thread_y;
+	//int grid_num_x=orign_grid_num_x+(2*kernel_radius*orign_grid_num_x+thread_x-1)/thread_x,grid_num_y=orign_grid_num_y+(2*kernel_radius*orign_grid_num_y+thread_y-1)/thread_y;
 	//int grid_num_x=(src->cols+THREAD_X-1)/THREAD_X,grid_num_y=(src->rows+THREAD_Y-1)/THREAD_Y;
+
+	int t_x=thread_x-2*kernel_radius,t_y=thread_y;
+	int grid_num_x=(padding_image.cols+t_x-1)/t_x,grid_num_y=(padding_image.rows+t_y-1)/t_y;
 	result.upload(*dst);
 	//g_kernel.upload(gauss_kernel);
 
@@ -219,7 +222,7 @@ void guassain_conv(const Mat *src,Mat *dst,double sigma){
 	//device_image.upload(*src);
 	cudaMemcpyToSymbol(guass_kernel_x,x,sizeof(double)*2*KERNEL_SIZE);
 	cudaMemcpyToSymbol(guass_kernel,gs_kernel,sizeof(double)*KERNEL_SIZE*KERNEL_SIZE);
-	dim3 thread_block(THREAD_X,THREAD_Y);
+	dim3 thread_block(thread_x,thread_y);
 	dim3 grid(grid_num_x,grid_num_y);
 	//convolution<<<grid,thread_block>>>(device_image,result,KERNEL_SIZE,kernel_radius,orign_width,orign_height);
 	conv_x<<<grid,thread_block>>>(device_image,result,KERNEL_SIZE,kernel_radius,orign_width,orign_height);
@@ -230,8 +233,18 @@ void guassain_conv(const Mat *src,Mat *dst,double sigma){
 	//resul.upload(re);
 	device_image.upload(padding_image);
 	//result.upload(*dst);	
-	conv_y<<<grid,thread_block>>>(device_image,result,KERNEL_SIZE,kernel_radius,orign_width,orign_height);
+	//orign_grid_num_x=(src->cols+thread_x1-1)/thread_x1,orign_grid_num_y=(src->rows+thread_y1-1)/thread_y1;
+        //grid_num_x=orign_grid_num_x+(2*kernel_radius*orign_grid_num_x+thread_x1-1)/thread_x1,grid_num_y=orign_grid_num_y+(2*kernel_radius*orign_grid_num_y+thread_y1-1)/thread_y1;
+
+
+	t_x=thread_x1;
+	t_y=thread_y1-2*kernel_radius;
+	grid_num_x=(padding_image.cols+t_x-1)/t_x,grid_num_y=(padding_image.rows+t_y-1)/t_y;
+        dim3 thread_block1(thread_x1,thread_y1);
+        dim3 grid1(grid_num_x,grid_num_y);	
+	conv_y<<<grid1,thread_block1>>>(device_image,result,KERNEL_SIZE,kernel_radius,orign_width,orign_height);
 	result.download(*dst);
+	cudaFreeHost(x);
 	return ;
 }
 

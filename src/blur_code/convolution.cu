@@ -21,6 +21,8 @@ namespace GPU = cv::cuda;
 
 #define THREAD_X 32
 #define THREAD_Y 32
+#define THREAD_X1 32
+#define THREAD_Y1 32
 #define WRAP_NUM 32
 #define MAX_WRAP_NUM 32
 
@@ -100,9 +102,9 @@ __global__ void conv_x(GPU::PtrStepSz<uchar3> src,/*const double* __restrict__ g
 				sum1+=src(pixel_j,pixel_i-kernel_radius+i).y*(float)guass_kernel_x[i];
 				sum2+=src(pixel_j,pixel_i-kernel_radius+i).z*(float)guass_kernel_x[i];
 			}
-			dst(pixel_j-kernel_radius,pixel_i-kernel_radius).x=sum;//src(pixel_j,pixel_i);
-			dst(pixel_j-kernel_radius,pixel_i-kernel_radius).y=sum1;
-			dst(pixel_j-kernel_radius,pixel_i-kernel_radius).z=sum2;
+			dst(pixel_j-kernel_radius,pixel_i-kernel_radius).x=sum;//sum;//src(pixel_j,pixel_i);
+			dst(pixel_j-kernel_radius,pixel_i-kernel_radius).y=sum1;//sum1;
+			dst(pixel_j-kernel_radius,pixel_i-kernel_radius).z=sum2;//sum2;
 		}
 		//dst(pixel_j,pixel_i)=sum;	
 	}
@@ -147,9 +149,9 @@ __global__ void conv_y(GPU::PtrStepSz<uchar3> src,/*const double* __restrict__ g
 				                                sum2+=src(pixel_j-kernel_radius+i,pixel_i).z*(float)guass_kernel_x[i];
 			}
 		
-		dst(pixel_j-kernel_radius,pixel_i-kernel_radius).x=sum;//src(pixel_j,pixel_i);//sum;
-		dst(pixel_j-kernel_radius,pixel_i-kernel_radius).y=sum1;
-		                        dst(pixel_j-kernel_radius,pixel_i-kernel_radius).z=sum2;
+		dst(pixel_j-kernel_radius,pixel_i-kernel_radius).x=sum;//sum;//src(pixel_j,pixel_i);//sum;
+		dst(pixel_j-kernel_radius,pixel_i-kernel_radius).y=sum1;//sum1;
+		                        dst(pixel_j-kernel_radius,pixel_i-kernel_radius).z=sum2;//sum2;
 		}
 	}
 	//dst(pixel_j,pixel_i)=sum;
@@ -197,8 +199,10 @@ void guassain_conv(const Mat *src,Mat *dst,double sigma){
 	//cudaHostAlloc(&y,sizeof(double)*KERNEL_SIZE,cudaHostAllocDefault);
 	//allocate
 	copyMakeBorder(*src,padding_image,kernel_radius,kernel_radius,kernel_radius,kernel_radius,BORDER_CONSTANT, 0);
-	int orign_grid_num_x=(src->cols+THREAD_X-1)/THREAD_X,orign_grid_num_y=(src->rows+THREAD_Y-1)/THREAD_Y;
-	int grid_num_x=orign_grid_num_x+(2*kernel_radius*orign_grid_num_x+THREAD_X-1)/THREAD_X,grid_num_y=orign_grid_num_y+(2*kernel_radius*orign_grid_num_y+THREAD_Y-1)/THREAD_Y;
+	//int orign_grid_num_x=(padding_image.cols+THREAD_X-1)/THREAD_X,orign_grid_num_y=(padding_image.rows+THREAD_Y-1)/THREAD_Y;
+	int t_x=THREAD_X-2*kernel_radius,t_y=THREAD_Y;
+	int grid_num_x=(padding_image.cols+t_x-1)/t_x,grid_num_y=(padding_image.rows+t_y-1)/t_y;
+	//int grid_num_x=orign_grid_num_x+(2*kernel_radius*orign_grid_num_x+THREAD_X-1)/THREAD_X,grid_num_y=orign_grid_num_y+(2*kernel_radius*orign_grid_num_y+THREAD_Y-1)/THREAD_Y;
 	//int grid_num_x=(src->cols+THREAD_X-1)/THREAD_X,grid_num_y=(src->rows+THREAD_Y-1)/THREAD_Y;
 	result.upload(*dst);
 	//g_kernel.upload(gauss_kernel);
@@ -214,14 +218,23 @@ void guassain_conv(const Mat *src,Mat *dst,double sigma){
 	dim3 grid(grid_num_x,grid_num_y);
 	//convolution<<<grid,thread_block>>>(device_image,result,KERNEL_SIZE,kernel_radius,orign_width,orign_height);
 	conv_x<<<grid,thread_block>>>(device_image,result,KERNEL_SIZE,kernel_radius,orign_width,orign_height);
-	//cudaDeviceSynchronize();
+	cudaDeviceSynchronize();
 	Mat re;
 	result.download(re);
 	copyMakeBorder(re,padding_image,kernel_radius,kernel_radius,kernel_radius,kernel_radius,BORDER_CONSTANT, 0);
 	//resul.upload(re);
-	device_image.upload(padding_image);
+	device_image.upload(padding_image);  
 	
-	conv_y<<<grid,thread_block>>>(device_image,result,KERNEL_SIZE,kernel_radius,orign_width,orign_height);
+
+	
+	//orign_grid_num_x=(padding_image.cols+THREAD_X1-1)/THREAD_X1,orign_grid_num_y=(padding_image.rows+THREAD_Y1-1)/THREAD_Y1;
+	t_x=THREAD_X1;
+	t_y=THREAD_Y1-2*kernel_radius;
+        //grid_num_x=orign_grid_num_x+(2*kernel_radius*orign_grid_num_x+THREAD_X1-1)/THREAD_X1,grid_num_y=orign_grid_num_y+(2*kernel_radius*orign_grid_num_y+THREAD_Y1-1)/THREAD_Y1;
+	grid_num_x=(padding_image.cols+t_x-1)/t_x,grid_num_y=(padding_image.rows+t_y-1)/t_y;
+	dim3 thread_block1(THREAD_X1,THREAD_Y1);
+        dim3 grid1(grid_num_x,grid_num_y);
+	conv_y<<<grid1,thread_block1>>>(device_image,result,KERNEL_SIZE,kernel_radius,orign_width,orign_height);
 	result.download(*dst);
 	return ;
 }
